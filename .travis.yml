@@ -1,0 +1,17 @@
+language: ruby
+cache: bundler
+rvm:
+- 2.3.0
+sudo: false
+deploy:
+  edge:
+    source: criteo-forks/dpl
+    branch: chef_ruby2
+  provider: chef-supermarket
+  user_id: annih
+  client_key: .travis/annih.pem
+  cookbook_name: updatable-attributes
+  cookbook_category: Other
+  skip_cleanup: true
+  on:
+    tags: true

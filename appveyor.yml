@@ -1,0 +1,15 @@
+environment:
+  RUBY_VERSION: 24
+
+install:
+  - set PATH=C:\Ruby%RUBY_VERSION%\bin;%PATH%
+  - ver
+  - ruby -v
+  - gem -v
+  - bundle -v
+  - bundle install
+
+build: off
+
+test_script:
+  - bundle exec rake
