@@ -4,9 +4,7 @@
 [![Linux Build Status][linux_build_shield]][linux_build_status]
 [![Windows Build Status][windows_build_shield]][windows_build_status]
 
-Expose PCI information via automatic attributes even during compilation time of the first Chef run.
-
-Due to the fact the Ohai plugins system requires a setup phase, this cookbooks does not use it.
+Allow to declare attributes computed each time other ones are updated.
 
 ## Requirements
 
