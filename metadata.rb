@@ -4,7 +4,7 @@ maintainer_email 'b.courtois@criteo.com'
 license          'Apache-2.0'
 description      'Allow definition of attribute based on other attributes and recomputed on update.'
 long_description ::IO.read(::File.join(File.dirname(__FILE__), 'README.md'))
-version          '0.0.1'
+version          '0.0.2'
 
 supports         'centos'
 supports         'redhat'
