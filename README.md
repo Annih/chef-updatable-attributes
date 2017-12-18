@@ -16,7 +16,29 @@ This cookbook leverage built-in Chef features and supports all Platforms.
 
 ## Usage
 
-TBD
+### To compute attributes based on a single attribute path:
+
+```ruby
+on_attribute_update('foo', 'bar') do
+  default['blah'] = node['foo']['bar']
+end
+# equivalent to
+on_attribute_update(%w[foo bar], init_on_registration: true) do
+  default['blah'] = node['foo']['bar']
+end
+```
+
+### To compute attributes based on multiple attribute paths:
+
+```ruby
+on_attributes_path(%[foo bar], 'blah') do
+  default['all'] = node['foo']['bar'] + node['blah']
+end
+# equivalent to
+on_attributes_path(%[foo bar], %[blah], init_on_registration: true) do
+  default['all'] = node['foo']['bar'] + node['blah']
+end
+```
 
 ## Contributing
 
