@@ -15,3 +15,5 @@ deploy:
   skip_cleanup: true
   on:
     tags: true
+before_deploy:
+- openssl aes-256-cbc -K $encrypted_407c19baee9f_key -iv $encrypted_407c19baee9f_iv -in .travis/annih.pem.enc -out .travis/annih.pem -d
