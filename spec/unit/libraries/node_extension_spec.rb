@@ -7,10 +7,14 @@ describe ::Chef::Node do
                           .node
   end
   describe 'the method on_attribute_update do' do
-    it 'registers the block and call it on update of the target attribute' do
-      node.on_attribute_update 'foo' do
+    def register_block(on_init: true)
+      node.on_attribute_update('foo', init_on_registration: on_init) do
         node.default['bar'] = node['foo'].to_i + 1
       end
+    end
+
+    it 'registers the block and call it on update of the target attribute' do
+      register_block
       node.default['foo'] = 1
       expect(node['bar']).to be 2
       node.default['foo'] = 2
@@ -19,68 +23,64 @@ describe ::Chef::Node do
 
     it 'calls the block on init by default' do
       expect(node['bar']).to be nil
-      node.on_attribute_update 'foo' do
-        node.default['bar'] = node['foo'].to_i + 1
-      end
+      register_block
       expect(node['bar']).to be 1
     end
 
     it 'does not call the block when init_on_registration is false' do
       expect(node['bar']).to be nil
-      node.on_attribute_update 'foo', init_on_registration: false do
-        node.default['bar'] = node['foo'].to_i + 1
-      end
+      register_block(on_init: false)
       expect(node['bar']).to be nil
     end
 
     it 'does not call the block for non-registered attributes update' do
       expect(node['bar']).to be nil
-      node.on_attribute_update 'foo', init_on_registration: false do
-        node.default['bar'] = node['foo'].to_i + 1
-      end
+      register_block(on_init: false)
       node.default['blah'] = 12
       expect(node['bar']).to be nil
     end
   end
 
-  describe 'the method on_attribute_updates do' do
-    it 'registers the block and call it on update of the target attributes' do
-      node.on_attributes_update 'host_name', 'domain_name' do
-        node.default['fqdn_value'] = [node['host_name'], node['domain_name']].compact.join('.')
+  describe 'the method on_attributes_update do' do
+    before { node.default['install'] }
+
+    def register_block(on_init: true)
+      node.on_attributes_update(%w[install hostname], %w[install domain], init_on_registration: on_init) do
+        hostname = node['install']['hostname']
+        domain = node['install']['domain']
+        node.default['install']['fqdn'] = [hostname, domain].compact.join('.')
       end
-      node.default['host_name'] = 'foo'
-      expect(node['fqdn_value']).to eq 'foo'
-      node.default['domain_name'] = 'bar'
-      expect(node['fqdn_value']).to eq 'foo.bar'
+    end
+
+    it 'registers the block and call it on update of the target attributes' do
+      register_block
+      node.default['install']['hostname'] = 'foo'
+      expect(node['install']['fqdn']).to eq 'foo'
+      node.default['install']['domain'] = 'bar'
+      expect(node['install']['fqdn']).to eq 'foo.bar'
     end
 
     it 'calls the block on init by default' do
-      expect(node['host_name']).to be nil
-      expect(node['domain_name']).to be nil
-      node.on_attributes_update 'host_name', 'domain_name' do
-        node.default['fqdn_value'] = [node['host_name'], node['domain_name']].compact.join('.')
-      end
-      expect(node['fqdn_value']).to eq ''
+      expect(node['install']['hostname']).to be nil
+      expect(node['install']['domain']).to be nil
+      register_block
+      expect(node['install']['fqdn']).to eq ''
     end
 
     it 'does not call the block when init_on_registration is false' do
-      expect(node['host_name']).to be nil
-      expect(node['domain_name']).to be nil
-      node.on_attributes_update 'host_name', 'domain_name', init_on_registration: false do
-        node.default['fqdn_value'] = [node['host_name'], node['domain_name']].compact.join('.')
-      end
-      expect(node['fqdn_value']).to be nil
+      expect(node['install']['hostname']).to be nil
+      expect(node['install']['domain']).to be nil
+      register_block(on_init: false)
+      expect(node['install']['fqdn']).to be nil
     end
 
     it 'does not call the block for non-registered attributes update' do
-      expect(node['host_name']).to be nil
-      expect(node['domain_name']).to be nil
-      node.on_attributes_update 'host_name', 'domain_name', init_on_registration: false do
-        node.default['fqdn_value'] = [node['host_name'], node['domain_name']].compact.join('.')
-      end
-      expect(node['fqdn_value']).to be nil
+      expect(node['install']['hostname']).to be nil
+      expect(node['install']['domain']).to be nil
+      register_block(on_init: false)
+      expect(node['install']['fqdn']).to be nil
       node.default['blah'] = 12
-      expect(node['fqdn_value']).to be nil
+      expect(node['install']['fqdn']).to be nil
     end
   end
 end
