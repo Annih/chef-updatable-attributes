@@ -31,11 +31,11 @@ end
 ### To compute attributes based on multiple attribute paths:
 
 ```ruby
-on_attributes_path(%[foo bar], 'blah') do
+on_attributes_update(%[foo bar], 'blah') do
   default['all'] = node['foo']['bar'] + node['blah']
 end
 # equivalent to
-on_attributes_path(%[foo bar], %[blah], init_on_registration: true) do
+on_attributes_update(%[foo bar], %[blah], init_on_registration: true) do
   default['all'] = node['foo']['bar'] + node['blah']
 end
 ```
