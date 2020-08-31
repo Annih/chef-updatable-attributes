@@ -60,9 +60,9 @@ describe ::ChefUpdatableAttributes::UpdateDispatcher do
       subject.register(paths[1], &handlers[0])
       subject.register(paths[1], &handlers[1])
 
-      expect(handlers[0]).to receive(:call).once.with(:default, paths[0], 1).ordered
-      expect(handlers[0]).to receive(:call).once.with(:override, paths[1], 2).ordered
-      expect(handlers[1]).to receive(:call).once.with(:override, paths[1], 2).ordered
+      expect(handlers[0]).to receive(:call).once.with(:default, paths[0], 1, nil).ordered
+      expect(handlers[0]).to receive(:call).once.with(:override, paths[1], 2, nil).ordered
+      expect(handlers[1]).to receive(:call).once.with(:override, paths[1], 2, nil).ordered
 
       node.write(:default, *paths[0], 1)
       node.write(:override, *paths[1], 2)
@@ -132,13 +132,13 @@ describe ::ChefUpdatableAttributes::UpdateDispatcher do
       subject.attribute_changed(:default, paths[2], 'value_2_1')
     end
 
-    it 'passes the value to the handler' do
+    it 'passes the new and old values to the handler' do
       allow(node).to receive(:read).with(*paths[0]).and_return('value_0_0', 'value_0_1', 'value_0_2', 'value_0_3')
       subject.register(paths[0], &handlers[0])
 
-      expect(handlers[0]).to receive(:call).with(anything, anything, 'value_0_1').ordered
-      expect(handlers[0]).to receive(:call).with(anything, anything, 'value_0_2').ordered
-      expect(handlers[0]).to receive(:call).with(anything, anything, 'value_0_3').ordered
+      expect(handlers[0]).to receive(:call).with(anything, anything, 'value_0_1', 'value_0_0').ordered
+      expect(handlers[0]).to receive(:call).with(anything, anything, 'value_0_2', 'value_0_1').ordered
+      expect(handlers[0]).to receive(:call).with(anything, anything, 'value_0_3', 'value_0_2').ordered
 
       subject.attribute_changed(:default, paths[0], 'value_0_1')
       subject.attribute_changed(:default, paths[0], 'value_0_2')

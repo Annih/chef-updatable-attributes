@@ -23,7 +23,7 @@ module ChefUpdatableAttributes
         return false if new_value == previous_value
 
         @attribute_value = new_value
-        @callback.call(precedence, @path, new_value)
+        @callback.call(precedence, @path, new_value, previous_value)
 
         true
       end
@@ -42,7 +42,7 @@ module ChefUpdatableAttributes
       @node.run_context.events.register(self)
     end
 
-    def attribute_changed(precedence, path, value)
+    def attribute_changed(precedence, path, _value)
       # Return to avoid auto-vivication of the subscriptions hash
       return unless @subscriptions.key?(path)
 
