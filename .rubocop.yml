@@ -14,6 +14,8 @@ Metrics/AbcSize:
 
 Metrics/BlockLength:
   Max: 90
+  Exclude:
+  - spec/**/*_spec.rb
 
 Metrics/LineLength:
   Max: 180 # we're not in the 80s anymore.
