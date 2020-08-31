@@ -2,6 +2,8 @@ require 'spec_helper'
 require_relative '../../../libraries/update_dispatcher'
 
 describe ::ChefUpdatableAttributes::UpdateDispatcher do
+  PRECEDENCES = %i[default force_default normal override force_override automatic].freeze
+
   subject(:dispatcher) { described_class.new(node) }
 
   let(:paths) { [%w[path], %w[another path], %w[yet another path]] }
@@ -87,6 +89,17 @@ describe ::ChefUpdatableAttributes::UpdateDispatcher do
       expect(handlers[1]).to receive(:call).once
 
       subject.attribute_changed(:normal, paths[1], 'value_1_1')
+    end
+
+    it 'does not call the subscriber if the compiled value is unchanged' do
+      allow(node).to receive(:read).with(*paths[0]).and_return('value_0_0', 'value_0_0')
+      subject.register(paths[0], &handlers[0])
+
+      expect(handlers[0]).not_to receive(:call)
+
+      subject.attribute_changed(:default, paths[0], 'value_0_0')
+      subject.attribute_changed(:normal, paths[0], 'value_0_0')
+      subject.attribute_changed(:automatic, paths[0], 'value_0_0')
     end
 
     it 'passes the precedence to the handler' do

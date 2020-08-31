@@ -5,9 +5,10 @@ module ChefUpdatableAttributes
 
     # Holds attribute update subscription info
     class Subscription
-      attr_reader :path, :callback
+      attr_reader :path, :callback, :attribute_value
 
-      def initialize(observed_path, &callback)
+      def initialize(observed_path, value = nil, &callback)
+        @attribute_value = value
         @path = observed_path.dup.freeze
         @callback = callback
       end
@@ -17,7 +18,14 @@ module ChefUpdatableAttributes
       end
 
       def notify(precedence, new_value)
+        previous_value = @attribute_value
+
+        return false if new_value == previous_value
+
+        @attribute_value = new_value
         @callback.call(precedence, @path, new_value)
+
+        true
       end
     end
 
@@ -49,7 +57,7 @@ module ChefUpdatableAttributes
         MESSAGE
 
         @stack[location] = path
-        subscription.notify(precedence, value)
+        subscription.notify(precedence, @node.read(*subscription.path))
         @stack.delete(location)
       end
     end
@@ -58,7 +66,7 @@ module ChefUpdatableAttributes
       raise ::ArgumentError, 'no block given' if block.nil?
 
       path = ::Kernel.Array(path)
-      subscription = Subscription.new(path, &block)
+      subscription = Subscription.new(path, @node.read(*path), &block)
 
       @subscriptions[path] << subscription
 
