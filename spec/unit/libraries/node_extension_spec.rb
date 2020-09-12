@@ -1,86 +1,55 @@
 require 'spec_helper'
 
 describe ::Chef::Node do
-  let(:node) do
-    ::ChefSpec::SoloRunner.new(platform: 'windows', version: '2016')
-                          .converge('updatable-attributes')
-                          .node
-  end
-  describe 'the method on_attribute_update do' do
-    def register_block(on_init: true)
-      node.on_attribute_update('foo', init_on_registration: on_init) do
-        node.default['bar'] = node['foo'].to_i + 1
+  subject(:node) { ::ChefSpec::SoloRunner.new(platform: 'windows', version: '2016').converge('updatable-attributes').node }
+  let(:paths) { [['foo'], %w[foo bar], ['blah']] }
+  let(:handlers) { ::Array.new(3) { ::Proc.new {} } }
+
+  before { node } # Ensure the libraries are loaded
+
+  describe '#on_attribute_update' do
+    it 'registers the handler on the UpdateDispatcher' do
+      expect(::ChefUpdatableAttributes::UpdateDispatcher).to receive(:register).with(node, paths[0], &handlers[0]).ordered
+      expect(::ChefUpdatableAttributes::UpdateDispatcher).to receive(:register).with(node, paths[1], &handlers[1]).ordered
+      expect(::ChefUpdatableAttributes::UpdateDispatcher).to receive(:register).with(node, paths[2], &handlers[2]).ordered
+
+      subject.on_attribute_update(*paths[0], &handlers[0])
+      subject.on_attribute_update(*paths[1], &handlers[1])
+      subject.on_attribute_update(paths[2], &handlers[2]) # missing splat is on purpose
+    end
+
+    context 'when init_on_registration is true' do
+      it 'calls the handler directly with nil values' do
+        expect { |b| subject.on_attribute_update(*paths[0], init_on_registration: true, &b) }.to yield_with_args(nil, nil, nil)
       end
     end
 
-    it 'registers the block and call it on update of the target attribute' do
-      register_block
-      node.default['foo'] = 1
-      expect(node['bar']).to be 2
-      node.default['foo'] = 2
-      expect(node['bar']).to be 3
-    end
-
-    it 'calls the block on init by default' do
-      expect(node['bar']).to be nil
-      register_block
-      expect(node['bar']).to be 1
-    end
-
-    it 'does not call the block when init_on_registration is false' do
-      expect(node['bar']).to be nil
-      register_block(on_init: false)
-      expect(node['bar']).to be nil
-    end
-
-    it 'does not call the block for non-registered attributes update' do
-      expect(node['bar']).to be nil
-      register_block(on_init: false)
-      node.default['blah'] = 12
-      expect(node['bar']).to be nil
+    context 'when init_on_registration is false' do
+      it 'does not call the handler' do
+        expect { |b| subject.on_attribute_update(*paths[0], init_on_registration: false, &b) }.not_to yield_control
+      end
     end
   end
 
-  describe 'the method on_attributes_update do' do
-    before { node.default['install'] }
+  describe '#on_attributes_update' do
+    it 'registers the handlers on the UpdateDispatcher' do
+      expect(::ChefUpdatableAttributes::UpdateDispatcher).to receive(:register).with(node, paths[0], &handlers[0]).ordered
+      expect(::ChefUpdatableAttributes::UpdateDispatcher).to receive(:register).with(node, *paths, &handlers[0]).ordered
 
-    def register_block(on_init: true)
-      node.on_attributes_update(%w[install hostname], %w[install domain], init_on_registration: on_init) do
-        hostname = node['install']['hostname']
-        domain = node['install']['domain']
-        node.default['install']['fqdn'] = [hostname, domain].compact.join('.')
+      subject.on_attributes_update(paths[0], &handlers[0])
+      subject.on_attributes_update(paths[0], paths[1], paths[2], &handlers[0])
+    end
+
+    context 'when init_on_registration is true' do
+      it 'calls the handler directly with nil values' do
+        expect { |b| subject.on_attributes_update(*paths, init_on_registration: true, &b) }.to yield_with_args(nil, nil, nil)
       end
     end
 
-    it 'registers the block and call it on update of the target attributes' do
-      register_block
-      node.default['install']['hostname'] = 'foo'
-      expect(node['install']['fqdn']).to eq 'foo'
-      node.default['install']['domain'] = 'bar'
-      expect(node['install']['fqdn']).to eq 'foo.bar'
-    end
-
-    it 'calls the block on init by default' do
-      expect(node['install']['hostname']).to be nil
-      expect(node['install']['domain']).to be nil
-      register_block
-      expect(node['install']['fqdn']).to eq ''
-    end
-
-    it 'does not call the block when init_on_registration is false' do
-      expect(node['install']['hostname']).to be nil
-      expect(node['install']['domain']).to be nil
-      register_block(on_init: false)
-      expect(node['install']['fqdn']).to be nil
-    end
-
-    it 'does not call the block for non-registered attributes update' do
-      expect(node['install']['hostname']).to be nil
-      expect(node['install']['domain']).to be nil
-      register_block(on_init: false)
-      expect(node['install']['fqdn']).to be nil
-      node.default['blah'] = 12
-      expect(node['install']['fqdn']).to be nil
+    context 'when init_on_registration is false' do
+      it 'does not call the handler' do
+        expect { |b| subject.on_attributes_update(*paths, init_on_registration: false, &b) }.not_to yield_control
+      end
     end
   end
 end
