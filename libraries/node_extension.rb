@@ -13,7 +13,7 @@ class Chef
       raise ::ArgumentError, 'no block given' if block.nil?
       paths = paths.map { |path| ::Kernel.Array(path) }
                    .each { |path| ::ChefUpdatableAttributes.validate_path!(path) }
-      ::ChefUpdatableAttributes::UpdateDispatcher.register(*paths, &block)
+      ::ChefUpdatableAttributes::UpdateDispatcher.register(self, *paths, &block)
       yield nil, nil, nil if init_on_registration
     end
   end
