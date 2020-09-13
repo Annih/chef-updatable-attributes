@@ -62,21 +62,22 @@ module ChefUpdatableAttributes
       end
     end
 
-    def register(path, &block)
+    def register(path, observe_parents: true, &block)
       raise ::ArgumentError, 'no block given' if block.nil?
 
       path = ::Kernel.Array(path)
       subscription = Subscription.new(path, @node.read(*path), &block)
 
-      @subscriptions[path] << subscription
+      key_lengths = observe_parents ? (1..path.size) : [path.size]
+      key_lengths.each { |length| @subscriptions[path[0...length]] << subscription }
 
       subscription
     end
 
-    def self.register(node, *paths, &block)
+    def self.register(node, *paths, observe_parents: true, &block)
       dispatcher = node.run_context.events.subscribers.find { |s| s.is_a? UpdateDispatcher }
       dispatcher ||= new(node)
-      paths.each { |p| dispatcher.register(p, &block) }
+      paths.each { |p| dispatcher.register(p, observe_parents: observe_parents, &block) }
     end
   end
 end

@@ -13,12 +13,26 @@ describe ::ChefUpdatableAttributes::UpdateDispatcher do
   describe '.register' do
     shared_examples 'common_registration_examples' do
       it 'calls #register for each given path' do
-        expect(dispatcher).to receive(:register).with(paths[0]) { |&b| expect(b).to eq handlers[0] }.ordered
-        expect(dispatcher).to receive(:register).with(paths[0]) { |&b| expect(b).to eq handlers[1] }.ordered
-        expect(dispatcher).to receive(:register).with(paths[1]) { |&b| expect(b).to eq handlers[1] }.ordered
+        expect(dispatcher).to receive(:register).with(paths[0], any_args) { |&b| expect(b).to eq handlers[0] }.ordered
+        expect(dispatcher).to receive(:register).with(paths[0], any_args) { |&b| expect(b).to eq handlers[1] }.ordered
+        expect(dispatcher).to receive(:register).with(paths[1], any_args) { |&b| expect(b).to eq handlers[1] }.ordered
 
         described_class.register(node, paths[0], &handlers[0])
         described_class.register(node, paths[0], paths[1], &handlers[1])
+      end
+
+      it 'passes observe_parents to #register' do
+        block_verifier = ::Proc.new { |&b| expect(b).to eq handlers[0] }
+        expect(dispatcher).to receive(:register).with(paths[0], observe_parents: true, &block_verifier).ordered
+        expect(dispatcher).to receive(:register).with(paths[1], observe_parents: true, &block_verifier).ordered
+        expect(dispatcher).to receive(:register).with(paths[1], observe_parents: true, &block_verifier).ordered
+        expect(dispatcher).to receive(:register).with(paths[2], observe_parents: true, &block_verifier).ordered
+        expect(dispatcher).to receive(:register).with(paths[2], observe_parents: false, &block_verifier).ordered
+        expect(dispatcher).to receive(:register).with(paths[0], observe_parents: false, &block_verifier).ordered
+
+        described_class.register(node, paths[0], paths[1], &handlers[0])
+        described_class.register(node, paths[1], paths[2], observe_parents: true, &handlers[0])
+        described_class.register(node, paths[2], paths[0], observe_parents: false, &handlers[0])
       end
     end
 
@@ -66,6 +80,39 @@ describe ::ChefUpdatableAttributes::UpdateDispatcher do
 
       node.write(:default, *paths[0], 1)
       node.write(:override, *paths[1], 2)
+    end
+
+    context 'when observe_parents is true' do
+      it 'also registers the given block for parent paths' do
+        observed_path = %w[foo bar blah]
+        subject.register(observed_path, observe_parents: true, &handlers[0])
+        expect(handlers[0]).to receive(:call).with(:default, observed_path, 'original', nil)
+        node.write(:default, *observed_path, 'original')
+
+        # When writting a Hash at the parent level
+        expect(handlers[0]).to receive(:call).with(:default, observed_path, 'updated', 'original')
+        node.write(:default, *observed_path[0...2], observed_path[2] => 'updated')
+        # When removed at the parent level
+        expect(handlers[0]).to receive(:call).with(:default, observed_path, nil, 'updated')
+        node.write(:default, *observed_path[0...2], {})
+
+        # When writting a Hash at the parent parent level
+        expect(handlers[0]).to receive(:call).with(:default, observed_path, 'reset', nil)
+        node.write(:default, observed_path[0], observed_path[1] => { observed_path[2] => 'reset' })
+        # When removed at the parent parent level
+        expect(handlers[0]).to receive(:call).with(:default, observed_path, nil, 'reset')
+        node.write(:default, observed_path[0], {})
+      end
+    end
+
+    context 'when observe_parents is false' do
+      it 'does not registers the given block for parent paths' do
+        observed_path = %w[foo bar blah]
+        subject.register(observed_path, observe_parents: false, &handlers[0])
+
+        expect(handlers[0]).not_to receive(:call).with(any_args)
+        1.upto(2) { |i| node.write(:default, observed_path[0...i], i) }
+      end
     end
   end
 
@@ -115,21 +162,35 @@ describe ::ChefUpdatableAttributes::UpdateDispatcher do
       subject.attribute_changed(:automatic, paths[0], 'value_0_3')
     end
 
-    it 'passes the path to the handler' do
-      allow(node).to receive(:read).with(*paths[0]).and_return('value_0_0', 'value_0_1')
-      allow(node).to receive(:read).with(*paths[1]).and_return('value_1_0', 'value_1_1')
-      allow(node).to receive(:read).with(*paths[2]).and_return('value_2_0', 'value_2_1')
-      subject.register(paths[0], &handlers[0])
-      subject.register(paths[1], &handlers[0])
-      subject.register(paths[2], &handlers[0])
+    context 'when called with "observed" path' do
+      it 'passes it to the handler' do
+        allow(node).to receive(:read).with(*paths[0]).and_return('value_0_0', 'value_0_1')
+        allow(node).to receive(:read).with(*paths[1]).and_return('value_1_0', 'value_1_1')
+        allow(node).to receive(:read).with(*paths[2]).and_return('value_2_0', 'value_2_1')
+        subject.register(paths[0], &handlers[0])
+        subject.register(paths[1], &handlers[0])
+        subject.register(paths[2], &handlers[0])
 
-      expect(handlers[0]).to receive(:call).with(:default, paths[0], any_args).ordered
-      expect(handlers[0]).to receive(:call).with(:default, paths[1], any_args).ordered
-      expect(handlers[0]).to receive(:call).with(:default, paths[2], any_args).ordered
+        expect(handlers[0]).to receive(:call).with(:default, paths[0], any_args).ordered
+        expect(handlers[0]).to receive(:call).with(:default, paths[1], any_args).ordered
+        expect(handlers[0]).to receive(:call).with(:default, paths[2], any_args).ordered
 
-      subject.attribute_changed(:default, paths[0], 'value_0_1')
-      subject.attribute_changed(:default, paths[1], 'value_1_1')
-      subject.attribute_changed(:default, paths[2], 'value_2_1')
+        subject.attribute_changed(:default, paths[0], 'value_0_1')
+        subject.attribute_changed(:default, paths[1], 'value_1_1')
+        subject.attribute_changed(:default, paths[2], 'value_2_1')
+      end
+    end
+
+    context 'when called with parent path' do
+      it 'passes the "observed" path to the handler' do
+        allow(node).to receive(:read).with(*paths[1]).and_return('value_1_0', nil)
+        allow(node).to receive(:read).with(paths[1][0]).and_return('value_1_0.0_0')
+        subject.register(paths[1], &handlers[0])
+
+        expect(handlers[0]).to receive(:call).with(anything, paths[1], any_args)
+
+        subject.attribute_changed(:default, [paths[1][0]], 'value_1.0_1')
+      end
     end
 
     it 'passes the new and old values to the handler' do
