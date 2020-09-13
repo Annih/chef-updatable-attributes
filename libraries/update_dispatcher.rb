@@ -3,11 +3,29 @@ module ChefUpdatableAttributes
   class UpdateDispatcher < ::Chef::EventDispatch::Base
     class UpdateLoop < ::RuntimeError; end
 
+    # Holds attribute update subscription info
+    class Subscription
+      attr_reader :path, :callback
+
+      def initialize(observed_path, &callback)
+        @path = observed_path.dup.freeze
+        @callback = callback
+      end
+
+      def source_location
+        @callback.source_location
+      end
+
+      def notify(precedence, new_value)
+        @callback.call(precedence, @path, new_value)
+      end
+    end
+
     def initialize(node, setup: true)
       super()
       @node = node
       @stack = ::Hash.new
-      @subscribers = ::Hash.new { |h, k| h[k] = [] }
+      @subscriptions = ::Hash.new { |h, k| h[k] = [] }
 
       setup_event_handler if setup
     end
@@ -17,10 +35,11 @@ module ChefUpdatableAttributes
     end
 
     def attribute_changed(precedence, path, value)
-      # Return to avoid auto-vivication of the subscribers hash
-      return unless @subscribers.key?(path)
-      @subscribers[path].each do |block|
-        location = block.source_location
+      # Return to avoid auto-vivication of the subscriptions hash
+      return unless @subscriptions.key?(path)
+
+      @subscriptions[path].each do |subscription|
+        location = subscription.source_location
         raise UpdateLoop, <<~MESSAGE if @stack.key?(location)
           a loop has been detected during Attribute update!
 
@@ -30,7 +49,7 @@ module ChefUpdatableAttributes
         MESSAGE
 
         @stack[location] = path
-        block.call(precedence, path, value)
+        subscription.notify(precedence, value)
         @stack.delete(location)
       end
     end
@@ -38,7 +57,12 @@ module ChefUpdatableAttributes
     def register(path, &block)
       raise ::ArgumentError, 'no block given' if block.nil?
 
-      @subscribers[Array(path)] << block
+      path = ::Kernel.Array(path)
+      subscription = Subscription.new(path, &block)
+
+      @subscriptions[path] << subscription
+
+      subscription
     end
 
     def self.register(node, *paths, &block)
