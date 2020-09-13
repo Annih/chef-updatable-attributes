@@ -23,7 +23,7 @@ on_attribute_update('foo', 'bar') do
   default['blah'] = node['foo']['bar']
 end
 # equivalent to
-on_attribute_update(%w[foo bar], init_on_registration: true) do
+on_attribute_update(%w[foo bar]) do
   default['blah'] = node['foo']['bar']
 end
 ```
@@ -35,10 +35,18 @@ on_attributes_update(%w[foo bar], 'blah') do
   default['all'] = node['foo']['bar'] + node['blah']
 end
 # equivalent to
-on_attributes_update(%w[foo bar], %w[blah], init_on_registration: true) do
+on_attributes_update(%w[foo bar], %w[blah]) do
   default['all'] = node['foo']['bar'] + node['blah']
 end
 ```
+
+### Options
+
+Option                  | Default | Description
+------------------------|:-------:|--------------------------------------
+*init\_on\_registration*| `true`  | Evaluate the block on registration.
+*observe_\parents*      | `true`  | Also observe parent attribute updates.
+
 
 ## Contributing
 
