@@ -35,15 +35,28 @@ describe ::Chef::Node do
 
     it 'passes observe_parents to the registration call' do
       expect(::ChefUpdatableAttributes::UpdateDispatcher).to receive(:register)
-        .with(node, paths[0], observe_parents: true) { |&b| expect(b).to eq handlers[0] }.ordered
+        .with(node, paths[0], observe_parents: true, recursion: 0) { |&b| expect(b).to eq handlers[0] }.ordered
       expect(::ChefUpdatableAttributes::UpdateDispatcher).to receive(:register)
-        .with(node, paths[1], observe_parents: true) { |&b| expect(b).to eq handlers[1] }.ordered
+        .with(node, paths[1], observe_parents: true, recursion: 0) { |&b| expect(b).to eq handlers[1] }.ordered
       expect(::ChefUpdatableAttributes::UpdateDispatcher).to receive(:register)
-        .with(node, paths[2], observe_parents: false) { |&b| expect(b).to eq handlers[2] }.ordered
+        .with(node, paths[2], observe_parents: false, recursion: 0) { |&b| expect(b).to eq handlers[2] }.ordered
 
       subject.on_attribute_update(*paths[0], &handlers[0])
       subject.on_attribute_update(*paths[1], observe_parents: true, &handlers[1])
       subject.on_attribute_update(*paths[2], observe_parents: false, &handlers[2])
+    end
+
+    it 'passes recursion to the registration call' do
+      expect(::ChefUpdatableAttributes::UpdateDispatcher).to receive(:register)
+        .with(node, paths[0], observe_parents: true, recursion: 0) { |&b| expect(b).to eq handlers[0] }.ordered
+      expect(::ChefUpdatableAttributes::UpdateDispatcher).to receive(:register)
+        .with(node, paths[1], observe_parents: true, recursion: 1) { |&b| expect(b).to eq handlers[1] }.ordered
+      expect(::ChefUpdatableAttributes::UpdateDispatcher).to receive(:register)
+        .with(node, paths[2], observe_parents: true, recursion: 5) { |&b| expect(b).to eq handlers[2] }.ordered
+
+      subject.on_attribute_update(*paths[0], &handlers[0])
+      subject.on_attribute_update(*paths[1], recursion: 1, &handlers[1])
+      subject.on_attribute_update(*paths[2], recursion: 5, &handlers[2])
     end
   end
 
@@ -72,11 +85,11 @@ describe ::Chef::Node do
 
     it 'passes observe_parents to the registration call' do
       expect(::ChefUpdatableAttributes::UpdateDispatcher).to receive(:register)
-        .with(node, *paths, observe_parents: true) { |&b| expect(b).to eq handlers[0] }.ordered
+        .with(node, *paths, observe_parents: true, recursion: 0) { |&b| expect(b).to eq handlers[0] }.ordered
       expect(::ChefUpdatableAttributes::UpdateDispatcher).to receive(:register)
-        .with(node, *paths, observe_parents: true) { |&b| expect(b).to eq handlers[1] }.ordered
+        .with(node, *paths, observe_parents: true, recursion: 0) { |&b| expect(b).to eq handlers[1] }.ordered
       expect(::ChefUpdatableAttributes::UpdateDispatcher).to receive(:register)
-        .with(node, *paths, observe_parents: false) { |&b| expect(b).to eq handlers[2] }.ordered
+        .with(node, *paths, observe_parents: false, recursion: 0) { |&b| expect(b).to eq handlers[2] }.ordered
 
       subject.on_attributes_update(*paths, &handlers[0])
       subject.on_attributes_update(*paths, observe_parents: true, &handlers[1])
