@@ -23,16 +23,30 @@ describe ::ChefUpdatableAttributes::UpdateDispatcher do
 
       it 'passes observe_parents to #register' do
         block_verifier = ::Proc.new { |&b| expect(b).to eq handlers[0] }
-        expect(dispatcher).to receive(:register).with(paths[0], observe_parents: true, &block_verifier).ordered
-        expect(dispatcher).to receive(:register).with(paths[1], observe_parents: true, &block_verifier).ordered
-        expect(dispatcher).to receive(:register).with(paths[1], observe_parents: true, &block_verifier).ordered
-        expect(dispatcher).to receive(:register).with(paths[2], observe_parents: true, &block_verifier).ordered
-        expect(dispatcher).to receive(:register).with(paths[2], observe_parents: false, &block_verifier).ordered
-        expect(dispatcher).to receive(:register).with(paths[0], observe_parents: false, &block_verifier).ordered
+        expect(dispatcher).to receive(:register).with(paths[0], observe_parents: true, recursion: 0, &block_verifier).ordered
+        expect(dispatcher).to receive(:register).with(paths[1], observe_parents: true, recursion: 0, &block_verifier).ordered
+        expect(dispatcher).to receive(:register).with(paths[1], observe_parents: true, recursion: 0, &block_verifier).ordered
+        expect(dispatcher).to receive(:register).with(paths[2], observe_parents: true, recursion: 0, &block_verifier).ordered
+        expect(dispatcher).to receive(:register).with(paths[2], observe_parents: false, recursion: 0, &block_verifier).ordered
+        expect(dispatcher).to receive(:register).with(paths[0], observe_parents: false, recursion: 0, &block_verifier).ordered
 
         described_class.register(node, paths[0], paths[1], &handlers[0])
         described_class.register(node, paths[1], paths[2], observe_parents: true, &handlers[0])
         described_class.register(node, paths[2], paths[0], observe_parents: false, &handlers[0])
+      end
+
+      it 'passes recursion to #register' do
+        block_verifier = ::Proc.new { |&b| expect(b).to eq handlers[0] }
+        expect(dispatcher).to receive(:register).with(paths[0], observe_parents: true, recursion: 0, &block_verifier).ordered
+        expect(dispatcher).to receive(:register).with(paths[1], observe_parents: true, recursion: 0, &block_verifier).ordered
+        expect(dispatcher).to receive(:register).with(paths[1], observe_parents: true, recursion: 1, &block_verifier).ordered
+        expect(dispatcher).to receive(:register).with(paths[2], observe_parents: true, recursion: 1, &block_verifier).ordered
+        expect(dispatcher).to receive(:register).with(paths[2], observe_parents: true, recursion: 5, &block_verifier).ordered
+        expect(dispatcher).to receive(:register).with(paths[0], observe_parents: true, recursion: 5, &block_verifier).ordered
+
+        described_class.register(node, paths[0], paths[1], &handlers[0])
+        described_class.register(node, paths[1], paths[2], recursion: 1, &handlers[0])
+        described_class.register(node, paths[2], paths[0], recursion: 5, &handlers[0])
       end
     end
 
@@ -206,11 +220,22 @@ describe ::ChefUpdatableAttributes::UpdateDispatcher do
       subject.attribute_changed(:default, paths[0], 'value_0_3')
     end
 
-    it 'raises UpdateLoop on notification loops' do
-      allow(node).to receive(:read).with(*paths[0]).and_return('value_0_0', 'value_0_1')
-      subject.register(paths[0]) { subject.attribute_changed(:default, paths[0], 'value_0_x') }
+    context 'when there is recursion' do
+      let(:recursor) { ::Proc.new { |p, k, v| node.write(p, k, v - 1) unless v.zero? } }
 
-      expect { subject.attribute_changed(:default, paths[0], 1) }.to raise_error(described_class::UpdateLoop)
+      it 'raises UpdateLoop if not allowed' do
+        allow(node).to receive(:read).with(*paths[0]).and_return(nil, 1, 0)
+        subject.register(paths[0], &recursor)
+
+        expect { subject.attribute_changed(:default, paths[0], 1) }.to raise_error(described_class::UpdateLoop)
+      end
+
+      it 'does not raise if allowed' do
+        allow(node).to receive(:read).with(*paths[0]).and_return(nil, 1, 0)
+        subject.register(paths[0], recursion: 2, &recursor)
+
+        expect { subject.attribute_changed(:default, paths[0], 2) }.not_to raise_error(described_class::UpdateLoop)
+      end
     end
   end
 end
