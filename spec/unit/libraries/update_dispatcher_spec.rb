@@ -234,7 +234,7 @@ describe ::ChefUpdatableAttributes::UpdateDispatcher do
         allow(node).to receive(:read).with(*paths[0]).and_return(nil, 1, 0)
         subject.register(paths[0], recursion: 2, &recursor)
 
-        expect { subject.attribute_changed(:default, paths[0], 2) }.not_to raise_error(described_class::UpdateLoop)
+        expect { subject.attribute_changed(:default, paths[0], 2) }.not_to raise_error
       end
     end
   end
