@@ -2,6 +2,17 @@
 
 This file is used to list changes made in each version of the updatable-attributes cookbook.
 
+## Version 1.0.0
+- Allow control of notification loop & recursion depth
+- Pass "previous value" to the subscriber block
+- Notify only on actual changes
+- Also observe parent attributes changes 
+
+⚠️ **Breaking changes:**
+
+- Setting an attribute to the current value used to notify the subscribers blocks, now only actual changes are notified.
+- Attributes update by parent override used to be ignored, now they are notifying the subscribers block if the value changed.
+
 ## Version 0.0.2
 - Fix calling syntax
 - Describe the syntax in the README.md
