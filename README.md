@@ -1,8 +1,7 @@
 # Cookbook updatable-attributes
 [![Cookbook Version][cookbook_version]][cookbook_page]
 [![License][license_shield]][license_file]
-[![Linux Build Status][linux_build_shield]][linux_build_status]
-[![Windows Build Status][windows_build_shield]][windows_build_status]
+[![CI][ci_shield]][ci_status]
 
 Allow to declare attributes computed each time other ones are updated.
 
@@ -83,7 +82,5 @@ limitations under the License.
 [cookbook_page]:        https://supermarket.chef.io/cookbooks/updatable-attributes
 [license_file]:         https://github.com/Annih/chef-updatable-attributes/blob/master/LICENSE
 [license_shield]:       https://img.shields.io/github/license/Annih/chef-updatable-attributes.svg
-[linux_build_shield]:   https://img.shields.io/travis/Annih/chef-updatable-attributes/master.svg?label=linux
-[linux_build_status]:   https://travis-ci.org/Annih/chef-updatable-attributes/branches
-[windows_build_shield]: https://img.shields.io/appveyor/ci/Annih/chef-updatable-attributes/master.svg?label=windows
-[windows_build_status]: https://ci.appveyor.com/project/Annih/chef-updatable-attributes?branch=master
+[ci_shield]:            https://github.com/Annih/chef-updatable-attributes/actions/workflows/CI.yml/badge.svg
+[ci_status]:            https://github.com/Annih/chef-updatable-attributes/actions/workflows/CI.yml
