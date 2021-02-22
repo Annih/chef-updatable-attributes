@@ -4,7 +4,9 @@ describe 'on_attribute_update' do
   subject(:node) { ::ChefSpec::SoloRunner.new(platform: 'windows', version: '2016').converge('updatable-attributes').node }
   before { node } # Ensure the libraries are loaded
 
-  # This seems 
+  # Added for https://github.com/Annih/chef-updatable-attributes/issues/4
+  # The bug is not reproductible on Chef 15+!
+  # It seems Chef changed something around default/auto-vivify/notification
   it 'shoult not detect loop due to AutoVivification on different precedence level' do
     node.default['base']['delay'] = -1
     node.default['base']['value'] = nil

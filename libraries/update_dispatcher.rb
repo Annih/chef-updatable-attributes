@@ -19,11 +19,12 @@ module ChefUpdatableAttributes
         @callback.source_location
       end
 
+      def notify?(new_value)
+        new_value != @attribute_value
+      end
+
       def notify(precedence, new_value)
         previous_value = @attribute_value
-
-        return false if new_value == previous_value
-
         @current_depth += 1
         @attribute_value = new_value
         @callback.call(precedence, @path, new_value, previous_value)
@@ -51,6 +52,9 @@ module ChefUpdatableAttributes
       return unless @subscriptions.key?(path)
 
       @subscriptions[path].each do |subscription|
+        new_value = @node.read(*subscription.path)
+        next unless subscription.notify?(new_value)
+
         location = subscription.source_location
         @stack << "#{location} with (#{precedence.inspect}, #{path.inspect}, #{value.inspect})"
 
@@ -62,7 +66,7 @@ module ChefUpdatableAttributes
           #{@stack.join("\n")}
         MESSAGE
 
-        subscription.notify(precedence, @node.read(*subscription.path))
+        subscription.notify(precedence, new_value)
         @stack.pop
       end
     end

@@ -2,6 +2,9 @@
 
 This file is used to list changes made in each version of the updatable-attributes cookbook.
 
+## Version 1.0.1
+- Fix NotificationLoop with Autovivification on Chef <15 [Issue #4](https://github.com/Annih/chef-updatable-attributes/issues/4)
+
 ## Version 1.0.0
 - Allow control of notification loop & recursion depth
 - Pass "previous value" to the subscriber block
