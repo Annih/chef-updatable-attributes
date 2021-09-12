@@ -28,9 +28,10 @@ module ChefUpdatableAttributes
         @current_depth += 1
         @attribute_value = new_value
         @callback.call(precedence, @path, new_value, previous_value)
-        @current_depth -= 1
 
         true
+      ensure
+        @current_depth -= 1
       end
     end
 

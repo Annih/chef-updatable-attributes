@@ -220,6 +220,17 @@ describe ::ChefUpdatableAttributes::UpdateDispatcher do
       subject.attribute_changed(:default, paths[0], 'value_0_3')
     end
 
+    context 'when block raises an error' do
+      # Added for https://github.com/Annih/chef-updatable-attributes/issues/5
+      it 'properly clean the UpdateLoop detection system' do
+        allow(node).to receive(:read).with(*paths[0]).and_return('a', 'b', 'c', 'd')
+        subject.register(paths[0]) { |_p, _k, v| raise 'FakeError' if v }
+
+        expect { subject.attribute_changed(:default, paths[0], true) }.to raise_error(/FakeError/)
+        expect { subject.attribute_changed(:default, paths[0], false) }.not_to raise_error described_class::UpdateLoop
+      end
+    end
+
     context 'when there is recursion' do
       let(:recursor) { ::Proc.new { |p, k, v| node.write(p, k, v - 1) unless v.zero? } }
 
