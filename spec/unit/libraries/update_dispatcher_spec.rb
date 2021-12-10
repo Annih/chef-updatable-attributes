@@ -78,6 +78,23 @@ describe ::ChefUpdatableAttributes::UpdateDispatcher do
     end
   end
 
+  describe '#debug' do
+    before(:each) { ENV['DEBUG_ATTRIBUTES_KEYS'] = 'interesting,important' }
+    after(:each) { ENV.delete('DEBUG_ATTRIBUTES_KEYS') }
+
+    it 'logs information about attributes update matching specified patterns' do
+      expect(::Chef::Log).to receive('debug').with(/important.*'2'/)
+      expect(::Chef::Log).to receive('debug').with(/interesting.*'3'/)
+      subject.debug('normal', %w[an important path], 2)
+      subject.debug('normal', %w[interesting key], 3)
+    end
+    it 'does nothing for attributes update not matching specified patterns' do
+      expect(::Chef::Log).not_to receive(:debug)
+      subject.debug('normal', %w[an unknown attribute], 1)
+      subject.debug('normal', %w[an dumb setting], 4)
+    end
+  end
+
   describe '#register' do
     it 'raises an ::ArgumentError if no block is given' do
       expect { subject.register(paths[0]) }.to raise_error(::ArgumentError, /block/)
@@ -131,6 +148,27 @@ describe ::ChefUpdatableAttributes::UpdateDispatcher do
   end
 
   describe '#attribute_changed' do
+    context 'when DEBUG_ATTRIBUTES_KEYS env var is set' do
+      before { ENV['DEBUG_ATTRIBUTES_KEYS'] = 'anything' }
+      after { ENV.delete('DEBUG_ATTRIBUTES_KEYS') }
+
+      it 'forwards all attribute changes to the debug method' do
+        [[:default, ['a'], 1], [:override, %w[b c], 2], [:normal, ['d'], 3]].each do |values|
+          expect(subject).to receive(:debug).with(*values)
+          subject.attribute_changed(*values)
+        end
+      end
+    end
+
+    context 'when DEBUG_ATTRIBUTES_KEYS env var is not set' do
+      it 'does not call the debug method' do
+        expect(subject).not_to receive(:debug)
+        [[:default, ['a'], 1], [:override, %w[b c], 2], [:normal, ['d'], 3]].each do |values|
+          subject.attribute_changed(*values)
+        end
+      end
+    end
+
     it 'calls subscribers of the given attribute path' do
       allow(node).to receive(:read).with(*paths[0]).and_return('value_0_0', 'value_0_1')
       subject.register(paths[0], &handlers[0])

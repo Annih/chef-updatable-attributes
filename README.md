@@ -47,7 +47,43 @@ Option                  | Default | Description
 *observe_\parents*      | `true`  | Also observe parent attribute updates.
 *recursion*             | `0`     | Configure allowed level of recursion.
 
+### To debug attributes update
 
+Sometimes it is tricky to understand why an attribute ended-up with its final value.
+Chef provides the `node.debug_value` method, which is already great, but it only prints the state when you call it.
+
+If you need to debug the "lifecycle" of your attributes, you can enable a temporary debug feature simply using the environment variable: `DEBUG_ATTRIBUTES_KEYS`
+
+The debug feature will evaluate this environment variable as a comma-separated list of attribute's key to watch.
+For instance if you want to debug all changes on attributes named "dangerous" *and* "important" you can do this:
+
+```
+  DEBUG_ATTRIBUTES_KEYS=dangerous,important sudo -E chef-client
+```
+
+As the attributes matching is trivial any attribute key equal to the given values will be logged.
+For instance the following attributes changes will be logged:
+
+```
+default['dangerous'] = true
+default['a']['dangerous']['setting'] = 42
+override['not']['important']['at'] = 'all'
+```
+
+However the matching is case sensitive on the whole string, so these changes won't be logged:
+
+```
+default['almost_dangerous'] = 41
+override['very']['Interesting'] = '!'
+```
+
+Finally, please note that the default log level used here is `debug`, if you want to change that you should use another environement variable: `DEBUG_ATTRIBUTES_LOG_LEVEL`
+
+For instance to log as warning the use of a dangerous attribute you can do:
+
+```
+DEBUG_ATTRIBUTES_LOG_LEVEL=warn DEBUG_ATTRIBUTES_KEYS=dangerous sudo -E chef-client
+```
 ## Contributing
 
 1. Fork the repository on Github
