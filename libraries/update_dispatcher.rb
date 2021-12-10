@@ -41,6 +41,10 @@ module ChefUpdatableAttributes
       @stack = []
       @subscriptions = ::Hash.new { |h, k| h[k] = [] }
 
+      # By specifying these env variable, one can enable attributes update debug
+      @debug_patterns = ENV['DEBUG_ATTRIBUTES_KEYS'].to_s.split(',')
+      @debug_log_level = ENV['DEBUG_ATTRIBUTES_LOG_LEVEL'] || 'debug'
+
       setup_event_handler if setup
     end
 
@@ -49,6 +53,8 @@ module ChefUpdatableAttributes
     end
 
     def attribute_changed(precedence, path, value)
+      debug(precedence, path, value) unless @debug_patterns.empty?
+
       # Return to avoid auto-vivication of the subscriptions hash
       return unless @subscriptions.key?(path)
 
@@ -70,6 +76,12 @@ module ChefUpdatableAttributes
         subscription.notify(precedence, new_value)
         @stack.pop
       end
+    end
+
+    def debug(precedence, path, value)
+      ::Chef::Log.send(@debug_log_level, <<~LOG_MESSAGE) if @debug_patterns.any? { |p| path.include?(p) }
+        Attributes at #{path.inspect} has been update to '#{value.inspect}' (#{precedence})
+      LOG_MESSAGE
     end
 
     def register(path, observe_parents: true, recursion: 0, &block)
