@@ -2,6 +2,9 @@
 
 This file is used to list changes made in each version of the updatable-attributes cookbook.
 
+# Version 1.1.1
+- Monkey patch Chef Node internals to detect mutating Array operation [Issue #7](https://github.com/Annih/chef-updatable-attributes/issues/7)
+
 # Version 1.1.0
 - Add new debug feature for attributes changes
 
