@@ -30,6 +30,7 @@ tmtags
 .project
 .settings
 mkmf.log
+.idea
 
 ## COMPILED ##
 ##############
@@ -69,6 +70,8 @@ Procfile
 
 # Berkshelf #
 #############
+Berksfile
+Berksfile.lock
 cookbooks/*
 tmp
 
@@ -76,10 +79,7 @@ tmp
 #############
 CONTRIBUTING
 CHANGELOG*
-
-# Kitchen #
-##########
-.kitchen.yml
+Policyfile.*
 
 # Strainer #
 ############
@@ -96,3 +96,7 @@ Vagrantfile
 # Travis #
 ##########
 .travis.yml
+
+# Rubocop #
+###########
+.rubocop.yml

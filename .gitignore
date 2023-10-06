@@ -1,22 +1,8 @@
-*~
-*#
-.#*
-\#*#
-.*.sw[a-z]
-*.un~
-pkg/
+.idea
+.DS_Store
 
-# Berkshelf
-.vagrant
-/cookbooks
-Berksfile.lock
-
-# Bundler
+Policyfile.lock.json
 Gemfile.lock
-bin/*
-.bundle/*
-
 .kitchen/
 .kitchen.local.yml
-
-*.pem
+.bundle/

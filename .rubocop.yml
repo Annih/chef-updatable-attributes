@@ -26,6 +26,10 @@ Metrics/ModuleLength:
 Metrics/MethodLength:
   Max: 40
 
+Naming/FileName:
+  Exclude:
+  - Policyfile.rb # this is chef names
+
 Style/FormatString:
   EnforcedStyle: percent
 
