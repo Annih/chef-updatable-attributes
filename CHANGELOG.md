@@ -2,6 +2,9 @@
 
 This file is used to list changes made in each version of the updatable-attributes cookbook.
 
+# Version 1.1.0
+- Add new debug feature for attributes changes
+
 # Version 1.0.2
 - Fix UpdateLoop detection system to handle exception raised in subscribers blocks [Issue #5](https://github.com/Annih/chef-updatable-attributes/issues/5)
 
