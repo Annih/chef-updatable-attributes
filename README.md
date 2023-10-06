@@ -44,7 +44,7 @@ end
 Option                  | Default | Description
 ------------------------|:-------:|--------------------------------------
 *init\_on\_registration*| `true`  | Evaluate the block on registration.
-*observe_\parents*      | `true`  | Also observe parent attribute updates.
+*observe\_parents*      | `true`  | Also observe parent attribute updates.
 *recursion*             | `0`     | Configure allowed level of recursion.
 
 ### To debug attributes update
