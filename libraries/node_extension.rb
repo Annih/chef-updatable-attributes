@@ -1,5 +1,5 @@
-require_relative 'default.rb'
-require_relative 'update_dispatcher.rb'
+require_relative 'default'
+require_relative 'update_dispatcher'
 
 class Chef
   # Add extension methods on Chef Node
@@ -15,6 +15,7 @@ class Chef
 
     def on_attributes_update(*paths, init_on_registration: true, observe_parents: true, recursion: 0, &block)
       raise ::ArgumentError, 'no block given' if block.nil?
+
       paths = paths.map { |path| ::Kernel.Array(path) }
                    .each { |path| ::ChefUpdatableAttributes.validate_path!(path) }
       ::ChefUpdatableAttributes::UpdateDispatcher.register(self,

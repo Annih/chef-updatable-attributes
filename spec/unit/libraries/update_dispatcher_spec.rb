@@ -2,12 +2,10 @@ require 'spec_helper'
 require_relative '../../../libraries/update_dispatcher'
 
 describe ::ChefUpdatableAttributes::UpdateDispatcher do
-  PRECEDENCES = %i[default force_default normal override force_override automatic].freeze
-
   subject(:dispatcher) { described_class.new(node) }
 
   let(:paths) { [%w[path], %w[another path], %w[yet another path]] }
-  let(:handlers) { ::Array.new(2) { |i| ::Proc.new { raise "Handler#{i} called while not expected" } } }
+  let(:handlers) { ::Array.new(2) { |i| proc { raise "Handler#{i} called while not expected" } } }
   let(:node) { ::ChefSpec::SoloRunner.new(platform: 'windows', version: 2016).converge('updatable-attributes').node }
 
   describe '.register' do
@@ -22,7 +20,7 @@ describe ::ChefUpdatableAttributes::UpdateDispatcher do
       end
 
       it 'passes observe_parents to #register' do
-        block_verifier = ::Proc.new { |&b| expect(b).to eq handlers[0] }
+        block_verifier = proc { |&b| expect(b).to eq handlers[0] }
         expect(dispatcher).to receive(:register).with(paths[0], observe_parents: true, recursion: 0, &block_verifier).ordered
         expect(dispatcher).to receive(:register).with(paths[1], observe_parents: true, recursion: 0, &block_verifier).ordered
         expect(dispatcher).to receive(:register).with(paths[1], observe_parents: true, recursion: 0, &block_verifier).ordered
@@ -36,7 +34,7 @@ describe ::ChefUpdatableAttributes::UpdateDispatcher do
       end
 
       it 'passes recursion to #register' do
-        block_verifier = ::Proc.new { |&b| expect(b).to eq handlers[0] }
+        block_verifier = proc { |&b| expect(b).to eq handlers[0] }
         expect(dispatcher).to receive(:register).with(paths[0], observe_parents: true, recursion: 0, &block_verifier).ordered
         expect(dispatcher).to receive(:register).with(paths[1], observe_parents: true, recursion: 0, &block_verifier).ordered
         expect(dispatcher).to receive(:register).with(paths[1], observe_parents: true, recursion: 1, &block_verifier).ordered
@@ -270,7 +268,7 @@ describe ::ChefUpdatableAttributes::UpdateDispatcher do
     end
 
     context 'when there is recursion' do
-      let(:recursor) { ::Proc.new { |p, k, v| node.write(p, k, v - 1) unless v.zero? } }
+      let(:recursor) { proc { |p, k, v| node.write(p, k, v - 1) unless v.zero? } }
 
       it 'raises UpdateLoop if not allowed' do
         allow(node).to receive(:read).with(*paths[0]).and_return(nil, 1, 0)

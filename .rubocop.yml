@@ -1,13 +1,23 @@
 AllCops:
-  TargetRubyVersion: 2.3
   AllowSymlinksInCacheRootDirectory: true
-
-Layout/AlignHash:
-  EnforcedColonStyle: table
-  EnforcedHashRocketStyle: key
+  NewCops: enable
+  SuggestExtensions: false
+  TargetRubyVersion: 2.5
+  Exclude:
+    - 'bundle/**/*'
+    - 'vendor/**/*'
 
 Layout/EndOfLine:
   EnforcedStyle: lf
+
+Layout/HashAlignment:
+  EnforcedColonStyle: table
+  EnforcedHashRocketStyle:
+  - key
+  - table
+
+Layout/LineLength:
+  Max: 180 # we're not in the 80s anymore.
 
 Metrics/AbcSize:
   Max: 60
@@ -16,9 +26,6 @@ Metrics/BlockLength:
   Max: 90
   Exclude:
   - spec/**/*_spec.rb
-
-Metrics/LineLength:
-  Max: 180 # we're not in the 80s anymore.
 
 Metrics/ModuleLength:
   Max: 200
@@ -30,17 +37,21 @@ Naming/FileName:
   Exclude:
   - Policyfile.rb # this is chef names
 
-Style/FormatString:
-  EnforcedStyle: percent
-
+# This requires to add a comment inside nearly all file which could be
+# considered as toil without value
 Style/FrozenStringLiteralComment:
   Enabled: false
 
-Style/StringLiterals:
-  ConsistentQuotesInMultiline: true
+# I just like this explicit format :)
+Style/RedundantConstantBase:
+  Enabled: false
 
+### Comma after each line in a list
 Style/TrailingCommaInArguments:
-  EnforcedStyleForMultiline: consistent_comma
+  EnforcedStyleForMultiline: comma
 
-Style/TrailingCommaInLiteral:
+Style/TrailingCommaInArrayLiteral:
+  EnforcedStyleForMultiline: comma
+
+Style/TrailingCommaInHashLiteral:
   EnforcedStyleForMultiline: comma
