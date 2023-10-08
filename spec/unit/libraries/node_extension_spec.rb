@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe ::Chef::Node do
   subject(:node) { ::ChefSpec::SoloRunner.new(platform: 'windows', version: '2016').converge('updatable-attributes').node }
-  let(:paths) { [['foo'], %w[foo bar], ['blah']] }
+  let(:paths) { [['foo'], %w(foo bar), ['blah']] }
   let(:handlers) { ::Array.new(3) { proc {} } }
 
   before { node } # Ensure the libraries are loaded

@@ -4,7 +4,7 @@ require_relative '../../../libraries/update_dispatcher'
 describe ::ChefUpdatableAttributes::UpdateDispatcher do
   subject(:dispatcher) { described_class.new(node) }
 
-  let(:paths) { [%w[path], %w[another path], %w[yet another path]] }
+  let(:paths) { [%w(path), %w(another path), %w(yet another path)] }
   let(:handlers) { ::Array.new(2) { |i| proc { raise "Handler#{i} called while not expected" } } }
   let(:node) { ::ChefSpec::SoloRunner.new(platform: 'windows', version: 2016).converge('updatable-attributes').node }
 
@@ -83,13 +83,13 @@ describe ::ChefUpdatableAttributes::UpdateDispatcher do
     it 'logs information about attributes update matching specified patterns' do
       expect(::Chef::Log).to receive('debug').with(/important.*'2'/)
       expect(::Chef::Log).to receive('debug').with(/interesting.*'3'/)
-      subject.debug('normal', %w[an important path], 2)
-      subject.debug('normal', %w[interesting key], 3)
+      subject.debug('normal', %w(an important path), 2)
+      subject.debug('normal', %w(interesting key), 3)
     end
     it 'does nothing for attributes update not matching specified patterns' do
       expect(::Chef::Log).not_to receive(:debug)
-      subject.debug('normal', %w[an unknown attribute], 1)
-      subject.debug('normal', %w[an dumb setting], 4)
+      subject.debug('normal', %w(an unknown attribute), 1)
+      subject.debug('normal', %w(an dumb setting), 4)
     end
   end
 
@@ -113,7 +113,7 @@ describe ::ChefUpdatableAttributes::UpdateDispatcher do
 
     context 'when observe_parents is true' do
       it 'also registers the given block for parent paths' do
-        observed_path = %w[foo bar blah]
+        observed_path = %w(foo bar blah)
         subject.register(observed_path, observe_parents: true, &handlers[0])
         expect(handlers[0]).to receive(:call).with(:default, observed_path, 'original', nil)
         node.write(:default, *observed_path, 'original')
@@ -136,7 +136,7 @@ describe ::ChefUpdatableAttributes::UpdateDispatcher do
 
     context 'when observe_parents is false' do
       it 'does not registers the given block for parent paths' do
-        observed_path = %w[foo bar blah]
+        observed_path = %w(foo bar blah)
         subject.register(observed_path, observe_parents: false, &handlers[0])
 
         expect(handlers[0]).not_to receive(:call).with(any_args)
@@ -151,7 +151,7 @@ describe ::ChefUpdatableAttributes::UpdateDispatcher do
       after { ENV.delete('DEBUG_ATTRIBUTES_KEYS') }
 
       it 'forwards all attribute changes to the debug method' do
-        [[:default, ['a'], 1], [:override, %w[b c], 2], [:normal, ['d'], 3]].each do |values|
+        [[:default, ['a'], 1], [:override, %w(b c), 2], [:normal, ['d'], 3]].each do |values|
           expect(subject).to receive(:debug).with(*values)
           subject.attribute_changed(*values)
         end
@@ -161,7 +161,7 @@ describe ::ChefUpdatableAttributes::UpdateDispatcher do
     context 'when DEBUG_ATTRIBUTES_KEYS env var is not set' do
       it 'does not call the debug method' do
         expect(subject).not_to receive(:debug)
-        [[:default, ['a'], 1], [:override, %w[b c], 2], [:normal, ['d'], 3]].each do |values|
+        [[:default, ['a'], 1], [:override, %w(b c), 2], [:normal, ['d'], 3]].each do |values|
           subject.attribute_changed(*values)
         end
       end

@@ -42,10 +42,6 @@ Naming/FileName:
 Style/FrozenStringLiteralComment:
   Enabled: false
 
-# I just like this explicit format :)
-Style/RedundantConstantBase:
-  Enabled: false
-
 ### Comma after each line in a list
 Style/TrailingCommaInArguments:
   EnforcedStyleForMultiline: comma

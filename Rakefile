@@ -1,9 +1,8 @@
 require 'rspec/core/rake_task'
-require 'foodcritic'
+require 'cookstyle'
 require 'rubocop/rake_task'
 
-::FoodCritic::Rake::LintTask.new
-::RuboCop::RakeTask.new
+::RuboCop::RakeTask.new(:cookstyle) { |t| t.options << '--display-cop-names' }
 ::RSpec::Core::RakeTask.new(:rspec) { |t| t.rspec_opts = '--format documentation' }
 
-task default: %i[rubocop foodcritic rspec]
+task default: %i(cookstyle rspec)
